@@ -28,19 +28,19 @@ class MyWindowShow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.layout=QtWidgets.QGridLayout()
         self.setWindowTitle("数据库查询 V1.0")
         self.log_init()
-        # 定义子窗口
-        self.child_dialog = MyDialog()
-        self.actionset.triggered.connect(self.child_dialog.show)
-        #绑定QT信号槽
-        self.child_dialog.signal_data.connect(self.get_database_config)
         self.Button_connect.clicked.connect(self.mysql_connect)
         self.Button_export.clicked.connect(self.export_excel)
         try:
-            f = open("config.json",encoding="utf-8")
-            self.cfg = json.load(f,encoding="utf-8")
+            f = open("config.json")
+            self.cfg = json.load(f)
             f.close()
         except OSError as reason:
             logging.info(str(reason))
+        self.child_dialog = MyDialog(self.cfg)
+        # 定义子窗口
+        self.actionset.triggered.connect(self.child_dialog.show)
+        #绑定QT信号槽
+        self.child_dialog.signal_data.connect(self.get_database_config)
 
     def mysql_connect(self,):
         logging.info("mysql_connect()...")
@@ -87,8 +87,10 @@ class MyWindowShow(QtWidgets.QMainWindow, Ui_MainWindow):
         logging.info("export_excel()...")
         mid_start = self.Edit_MidStart.text()
         mid_end = self.Edit_MidEnd.text()
-        if len(mid_start)==22 and len(mid_end)==22:
-            pass
+        if self.cBox_pc_filter.currentText()=="请选择批次":
+            if(len(mid_start)!=22 or len(mid_end)!=22):
+                self.statusBar.showMessage("模块ID输入有误...")
+                logging.info
 
     def log_init(self):    
         if not(os.path.exists("LogFile")):
@@ -100,9 +102,9 @@ class MyWindowShow(QtWidgets.QMainWindow, Ui_MainWindow):
     def get_database_config(self,config):
         self.cfg["host"] = config["host"]
         self.cfg["user"] = config["user"]
-        self.cfg["passwd"] = config["password"]
+        self.cfg["passwd"] = config["passwd"]
         self.cfg["port"] = config["port"]
-        self.cfg["db"] = config["database"]
+        self.cfg["db"] = config["db"]
         self.save_config()
     
     def save_config(self):

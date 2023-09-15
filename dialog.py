@@ -14,17 +14,23 @@ from PyQt5.QtCore import pyqtSignal
 
 class MyDialog(QtWidgets.QDialog, Ui_Dialog):
     signal_data=pyqtSignal(dict)
-    def __init__(self):
+    def __init__(self,cfg):
         super(MyDialog, self).__init__()
         self.setupUi(self)
-        self.my_sql_config = {"host":"","user":"","passwd":"","port":"","database":"zztestdb"}
+        self.my_sql_config = {"host":cfg["host"],"user":cfg["user"],"passwd":cfg["passwd"],"port":cfg["port"],"db":cfg["db"]}
         self.Button_yes.clicked.connect(self.get_data)
+        self.lineEdit_host.setText(self.my_sql_config["host"])
+        self.lineEdit_user.setText(self.my_sql_config["user"])
+        self.lineEdit_passwd.setText(self.my_sql_config["passwd"])
+        self.lineEdit_port.setText(str(self.my_sql_config["port"]))
+        self.cBox_database.addItem(self.my_sql_config["db"])
+
 
     def get_data(self):
         self.my_sql_config["host"]=self.lineEdit_host.text()
         self.my_sql_config["user"]=self.lineEdit_user.text()
-        self.my_sql_config["password"]=self.lineEdit_passwd.text()
+        self.my_sql_config["passwd"]=self.lineEdit_passwd.text()
         self.my_sql_config["port"]=int(self.lineEdit_port.text())
-        self.my_sql_config["database"]=self.cBox_database.currentText()
+        self.my_sql_config["db"]=self.cBox_database.currentText()
         self.signal_data.emit(self.my_sql_config)
         self.close()
