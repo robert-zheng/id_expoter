@@ -6,8 +6,8 @@ from PyQt5.QtGui import QColor
 import sys
 import time
 import os
+import pandas as pd
 import logging
-import threading
 import pymysql
 import datetime
 import numpy as np
@@ -56,6 +56,7 @@ class MyWindowShow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.cursor_Xj=self.conn.cursor()
                 self.statusBar.showMessage("主机已连接%s" %self.cfg["host"])
                 logging.info("主机已连接%s" %self.cfg["host"])
+                self.setWindowTitle("数据库查询 V1.0"+'___'+self.cfg['db'])
                 self.Button_connect.setText("断开连接")
                 # 获取所有存在的批次，添加到批次下拉框中
                 self.get_pc()
@@ -66,6 +67,7 @@ class MyWindowShow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.conn.close()
             logging.info("已经断开连接%s" %self.cfg["host"])
             self.statusBar.showMessage("已经断开连接%s" %self.cfg["host"])
+            self.setWindowTitle("数据库查询 V1.0")
             self.Button_connect.setText("连接")
 
     def get_pc(self):
@@ -90,11 +92,28 @@ class MyWindowShow(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.cBox_pc_filter.currentText()=="请选择批次":
             if(len(mid_start)!=22 or len(mid_end)!=22):
                 self.statusBar.showMessage("模块ID输入有误...")
-                logging.info
+                logging.info("模块ID输入有误...")
+            else:
+                sql = '''SELECT modulid as'模块ID',LEFT(icid,48) as '芯片ID' FROM xjlcdbnew.t_modulids
+WHERE modulid>="{start}" and modulid<="{end}" order by modulid asc'''.format(start=mid_start,end=mid_end)
+                logging.info(sql)
+                cursor = self.conn.cursor(cursor=pymysql.cursors.DictCursor)
+                cursor.execute(sql)
+                res = pd.read_sql(sql,self.conn)
+                logging.info(res)
+                wb = openpyxl.Workbook()
+                ws = wb.active
+
+                file_name = ".\\export\\ID对应关系.xlsx"
+                wb.save(filename=file_name)
+
+
 
     def log_init(self):    
         if not(os.path.exists("LogFile")):
             os.mkdir("LogFile")
+        if not(os.path.exists("export")):
+            os.mkdir("export")
         time_str = time.strftime('%Y_%m%d-%H%M%S', time.localtime())
         log_file_name = ".\\LogFile\\"+time_str+".txt"
         logging.basicConfig(filename=log_file_name,format="%(asctime)s %(name)s:%(levelname)s-->%(message)s",level='DEBUG',)
