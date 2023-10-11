@@ -99,11 +99,14 @@ WHERE modulid>="{start}" and modulid<="{end}" order by modulid asc'''.format(sta
                 logging.info(sql)
                 cursor = self.conn.cursor(cursor=pymysql.cursors.DictCursor)
                 cursor.execute(sql)
+                res = cursor.fetchall()
                 res = pd.read_sql(sql,self.conn)
                 logging.info(res)
                 wb = openpyxl.Workbook()
                 ws = wb.active
-
+                ws.append(list(res[0].keys()))
+                for each in res:
+                    ws.append(list(each.values()))
                 file_name = ".\\export\\ID对应关系.xlsx"
                 wb.save(filename=file_name)
 
