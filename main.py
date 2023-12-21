@@ -10,6 +10,8 @@ import os
 import logging
 import pymysql
 from openpyxl import Workbook
+from  openpyxl.styles import Border,Side
+from openpyxl.utils import get_column_letter
 
 from dialog import MyDialog
 import json
@@ -120,7 +122,7 @@ WHERE modulid>="{start}" and modulid<="{end}" order by modulid asc'''.format(sta
             ws.column_dimensions['A'].width=25
             ws.column_dimensions['B'].width=50
             time_str = time.strftime('%Y_%m%d_%H%M%S', time.localtime())
-            self.file_name = ".\\export\\{para}ID对应关系.xlsx".format(para=self.pc)
+            self.file_name = ".\\export\\{para}ID对应关系{time}.xlsx".format(para=self.pc,time=time_str)
             wb.save(filename=self.file_name)
             self.statusBar.showMessage("文件已导出:"+self.file_name)
             self.Button_file.setHidden(False)
@@ -167,14 +169,30 @@ AND s.setnosub='001'
 AND d.tstep=0  ORDER BY s.intime DESC LIMIT 100000
 '''.format(pc=self.pc)
         logging.info("SQL:"+sql)
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor(cursor=pymysql.cursors.DictCursor)
         cursor.execute(sql)
         res = cursor.fetchall()
+        ws.append(list(res[0].keys()))
         for each in res:
-            logging.info(each)
-            ws.append(each)
-        file_name = ".\\export\\"+"{pc}_测试数据.xlsx".format(pc=self.pc)
+            ws.append(list(each.values()))
+ 
+        border = Border(left=Side(style='thin'), 
+                right=Side(style='thin'), 
+                top=Side(style='thin'), 
+                bottom=Side(style='thin'))
+        for row in ws:
+            for cell in row:
+                cell.border = border
+        ls_a = list(res[0].values())
+        ls_b = list(res[0].keys())
+        for each in range(len(res[0])):
+            len_a = len(str(ls_a[each]))
+            len_b = len(str(ls_b[each]))
+            ws.column_dimensions[get_column_letter(each+1)].width =  (len_a if(len_a>len_b) else len_b)+6
+        time_str = time.strftime('%Y_%m%d_%H%M%S', time.localtime())
+        file_name = ".\\export\\"+"{pc}_测试数据{time}.xlsx".format(pc=self.pc,time=time_str)
         wb_data.save(filename=file_name)
+        self.statusBar.showMessage("数据导出已完成...")
 
     def open_file(self):
         logging.info(self.file_name)
